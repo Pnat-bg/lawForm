@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complaint Form Generator</title>
+  
+  <!-- CSS ภายนอก -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- ส่วนหัว -->
+  <header>
+    <h1>Complaint Form Generator</h1>
+    <p>สร้างคำฟ้องอัตโนมัติ</p>
+  </header>
+
+  <!-- ส่วนปุ่มและตัวอย่างด้านบน -->
+  <div class="top-container">
+    <div class="top-form">
+      <h2>กรอกข้อมูล</h2>
+      <div class="tab-buttons">
+        <button class="tab-btn active" onclick="openTab('caseTab')">ข้อมูลคดี</button>
+        <button class="tab-btn" onclick="openTab('plaintiffTab')">โจทก์</button>
+        <button class="tab-btn" onclick="openTab('defendantTab')">จำเลย</button>
+        <button class="tab-btn" onclick="openTab('requestTab')">คำขอท้ายคำฟ้อง</button>
+      </div>
+    </div>
+    <div class="top-preview">
+      <h2>ตัวอย่าง PDF</h2>
+      <div>
+        <button onclick="downloadPDF()">ดาวน์โหลดเป็น PDF</button>
+        <button onclick="resetForm()">รีเซ็ตข้อมูล</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วนเนื้อหาหลัก -->
+  <div class="main-container">
+    <!-- ฟอร์มกรอกข้อมูล -->
+    <div class="form-container">
+      <!-- แท็บข้อมูลคดี -->
+      <div id="caseTab" class="tab-content active">
+        <div class="case-row">
+          <div class="case-number form-field">
+            <label>เลขคดีดำ:</label>
+            <input type="text" id="caseNumberInput" placeholder="เช่น 123/2566" oninput="debouncedUpdatePreview()" autocomplete="off">
+          </div>
+          <div class="court-name form-field">
+            <label>ศาล:</label>
+            <input type="text" id="courtInput" placeholder="เช่น ศาลอาญากรุงเทพใต้" oninput="restrictInput(this, 230); debouncedUpdatePreview()" autocomplete="off">
+          </div>
+        </div>
+        <div class="date-row">
+          <div class="filing-date form-field">
+            <label>วันที่ยื่นฟ้อง (พ.ศ.):</label>
+            <input type="text" id="dateInput" oninput="debouncedUpdatePreview()" autocomplete="off">
+          </div>
+          <div class="case-type form-field">
+            <label>ประเภทคดี:</label>
+            <input type="text" id="caseTypeInput" placeholder="เช่น แพ่ง, อาญา" oninput="restrictInput(this, 227); debouncedUpdatePreview()" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-field">
+          <label>ข้อหา:</label>
+          <input type="text" id="chargeInput" placeholder="เช่น ผิดสัญญาเงินกู้ยืม" oninput="restrictInput(this, 360); debouncedUpdatePreview()" autocomplete="off">
+        </div>
+        <div class="amount-row">
+          <div class="amount-baht form-field">
+            <label>จำนวนเงิน (บาท):</label>
+            <input type="text" id="amountBahtInput" placeholder="เช่น 10,000" oninput="debouncedUpdatePreview()" autocomplete="off">
+          </div>
+          <div class="amount-satang form-field">
+            <label>(สตางค์):</label>
+            <input type="text" id="amountSatangInput" placeholder="เช่น 50" oninput="debouncedUpdatePreview()" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-field">
+          <label>เนื้อหาคำฟ้อง:</label>
+          <textarea id="complaintContentInput" rows="6" placeholder="กรุณากรอกเนื้อหาคำฟ้องที่นี่" oninput="debouncedUpdatePreview()"></textarea>
+        </div>
+      </div>
+
+      <!-- แท็บโจทก์ -->
+      <div id="plaintiffTab" class="tab-content">
+        <div class="plaintiff-layout">
+          <div class="plaintiff-tabs">
+            <div id="plaintiffTabsContainer"></div>
+            <button id="addPlaintiffBtn" onclick="addPlaintiffTab()">+ เพิ่มโจทก์</button>
+          </div>
+          <div class="plaintiff-form">
+            <div id="plaintiffFormContainer">
+              <div class="plaintiff-form-content">
+                <div class="plaintiff-name-field form-field">
+                  <label>ชื่อโจทก์:</label>
+                  <input type="text" class="plaintiff-input" id="plaintiffNameInput1" placeholder="กรอกชื่อโจทก์" oninput="debouncedUpdatePreview()" autocomplete="off">
+                </div>
+                <div class="plaintiff-details-row">
+                  <div class="plaintiff-type-field form-field">
+                    <label>ประเภท:</label>
+                    <select class="plaintiff-input" id="plaintiffTypeSelect1" onchange="debouncedUpdatePreview()">
+                      <option value="individual">บุคคลธรรมดา</option>
+                      <option value="company">นิติบุคคล</option>
+                    </select>
+                  </div>
+                  <div class="plaintiff-id-field form-field">
+                    <label>เลขประจำตัวประชาชน:</label>
+                    <input type="text" class="plaintiff-input" id="plaintiffIdInput1" placeholder="กรอกเลขประจำตัวประชาชน" oninput="debouncedUpdatePreview()" autocomplete="off">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- แท็บจำเลย -->
+      <div id="defendantTab" class="tab-content">
+        <div class="defendant-layout">
+          <div class="defendant-tabs">
+            <div id="defendantTabsContainer"></div>
+            <button id="addDefendantBtn" onclick="addDefendantTab()">+ เพิ่มจำเลย</button>
+          </div>
+          <div class="defendant-form">
+            <div id="defendantFormContainer">
+              <div class="defendant-form-content">
+                <div class="defendant-name-field form-field">
+                  <label>ชื่อจำเลย:</label>
+                  <input type="text" class="defendant-input" id="defendantNameInput1" placeholder="กรอกชื่อจำเลย" oninput="debouncedUpdatePreview()" autocomplete="off">
+                </div>
+                <div class="defendant-details-row">
+                  <div class="defendant-type-field form-field">
+                    <label>ประเภท:</label>
+                    <select class="defendant-input" id="defendantTypeSelect1" onchange="debouncedUpdatePreview()">
+                      <option value="individual">บุคคลธรรมดา</option>
+                      <option value="company">นิติบุคคล</option>
+                    </select>
+                  </div>
+                  <div class="defendant-id-field form-field">
+                    <label>เลขประจำตัวประชาชน:</label>
+                    <input type="text" class="defendant-input" id="defendantIdInput1" placeholder="กรอกเลขประจำตัวประชาชน" oninput="debouncedUpdatePreview()" autocomplete="off">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <span id="defendantError" style="color: red;"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- แท็บคำขอท้ายคำฟ้อง -->
+      <div id="requestTab" class="tab-content">
+        <div class="request-layout">
+          <div class="request-header-row">
+            <div class="form-field request-type-field">
+              <label>ประเภทคำขอท้ายคำฟ้อง:</label>
+              <select id="requestType" onchange="toggleRequestForm()">
+                <option value="civil" selected>คำขอท้ายคำฟ้องแพ่ง</option>
+                <option value="criminal">คำขอท้ายคำฟ้องอาญา</option>
+              </select>
+            </div>
+            <div class="form-field request-copies-field">
+              <label>จำนวนฉบับ:</label>
+              <input type="number" id="requestCopiesInput" min="0" placeholder="กรุณากรอกจำนวนฉบับ" oninput="debouncedUpdatePreview()" autocomplete="off">
+            </div>
+          </div>
+          <!-- ฟอร์มคำขอท้ายคำฟ้องแพ่ง -->
+          <div id="civilRequestForm" class="request-form active">
+            <div class="plaintiff-lawyer-row">
+              <div class="form-field plaintiff-lawyer-name-field">
+                <label>ชื่อ:</label>
+                <input type="text" id="plaintiffOrLawyerNameInput" placeholder="กรอกชื่อโจทก์หรือทนายโจทก์" oninput="debouncedUpdatePreview()" autocomplete="off">
+              </div>
+              <div class="form-field plaintiff-lawyer-type-field">
+                <label>ประเภท:</label>
+                <select id="plaintiffOrLawyerTypeSelect" onchange="debouncedUpdatePreview()">
+                  <option value="ทนายโจทก์" selected>ทนายโจทก์</option>
+                  <option value="โจทก์">โจทก์</option>
+                </select>
+              </div>
+            </div>
+            <div id="civilRequestItems">
+              <div class="request-item form-field" data-index="1">
+                <div class="request-header">
+                  <label>ข้อ 1:</label>
+                  <button class="removeRequestBtn" onclick="removeRequestItem(this)">ลบ</button>
+                </div>
+                <textarea class="civil-request-input" rows="4" placeholder="กรุณากรอกคำขอ เช่น ขอให้จำเลยชดใช้เงิน 100,000 บาท" oninput="debouncedUpdatePreview()"></textarea>
+              </div>
+            </div>
+            <button id="addRequestBtn" onclick="addRequestItem()">+ เพิ่มข้อเรียกร้อง</button>
+          </div>
+          <!-- ฟอร์มคำขอท้ายคำฟ้องอาญา -->
+          <div id="criminalRequestForm" class="request-form">
+            <div class="plaintiff-lawyer-row">
+              <div class="form-field plaintiff-lawyer-name-field">
+                <label>ชื่อ:</label>
+                <input type="text" id="criminalPlaintiffOrLawyerNameInput" placeholder="กรอกชื่อโจทก์หรือทนายโจทก์" oninput="debouncedUpdatePreview()" autocomplete="off">
+              </div>
+              <div class="form-field plaintiff-lawyer-type-field">
+                <label>ประเภท:</label>
+                <select id="criminalPlaintiffOrLawyerTypeSelect" onchange="debouncedUpdatePreview()">
+                  <option value="ทนายโจทก์" selected>ทนายโจทก์</option>
+                  <option value="โจทก์">โจทก์</option>
+                </select>
+              </div>
+            </div>
+            <!-- เพิ่มฟิลด์สำหรับ summonWord -->
+            <div class="form-field summon-word-field">
+              <label>ขอให้ศาลออกหมาย:</label>
+              <input type="text" id="summonWordInput" placeholder="เช่น เรียก (ถ้าไม่กรอกจะใช้ 'นัด')" oninput="debouncedUpdatePreview()" autocomplete="off">
+            </div>
+            <!-- ส่วน "เป็นความผิดต่อกฎหมายและบทมาตราดังต่อไปนี้" -->
+            <div class="form-field">
+              <label>เป็นความผิดต่อกฎหมายและบทมาตราดังต่อไปนี้:</label>
+              <textarea id="criminalLawInput" rows="4" placeholder="กรุณากรอก เช่น ข้อ 1 ประมวลกฎหมายอาญา มาตรา 340" oninput="debouncedUpdatePreview()"></textarea>
+            </div>
+            <!-- ส่วนคำขอ -->
+            <div id="criminalRequestItems">
+              <h3>คำขอ</h3>
+              <div class="request-item form-field" data-index="1">
+                <div class="request-header">
+                  <label>ข้อ 1:</label>
+                  <button class="removeRequestBtn" onclick="removeCriminalRequestItem(this)">ลบ</button>
+                </div>
+                <textarea class="criminal-request-input" rows="4" placeholder="กรุณากรอกคำขอ เช่น ขอให้ลงโทษจำเลยตามกฎหมาย" oninput="debouncedUpdatePreview()"></textarea>
+              </div>
+            </div>
+            <button id="addCriminalRequestBtn" onclick="addCriminalRequestItem()">+ เพิ่มข้อเรียกร้อง</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ส่วนแสดงตัวอย่าง PDF -->
+    <div class="preview-container">
+      <div id="pdfPreviewContainer"></div>
+    </div>
+  </div>
+
+  <!-- ส่วนท้าย -->
+  <footer>
+    <p>© 2025 Complaint Form Generator</p>
+  </footer>
+
+  <!-- ไลบรารี JavaScript ภายนอก -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+  <!-- ไฟล์ JavaScript หลัก -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
